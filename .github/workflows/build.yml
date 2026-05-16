@@ -1,0 +1,36 @@
+name: Build signals
+
+on:
+  schedule:
+    # 21:30 UTC weekdays - after US cash close, gives the upstream
+    # Portfolio-Command-Centre pipeline time to refresh history.json.
+    - cron: "30 21 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run build
+        run: python scripts/build.py
+
+      - name: Commit outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ docs/ || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Auto-update signals $(date -u +%Y-%m-%d)"
+            git push
+          fi

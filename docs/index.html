@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parabolic Scale-Out Monitor</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --fg: #1a1a1a;
+      --fg-muted: #555;
+      --fg-faint: #777;
+      --border: #e5e7eb;
+      --bg: #ffffff;
+      --bg-soft: #f7f7f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.55;
+    }
+    header h1 { font-size: 1.5rem; margin: 0 0 0.25rem; font-weight: 600; }
+    header p.sub { margin: 0 0 0.4rem; color: var(--fg-muted); font-size: 0.95rem; }
+    header p.meta { margin: 0 0 1.5rem; color: var(--fg-faint); font-size: 0.8rem; }
+    header p.meta time { font-variant-numeric: tabular-nums; }
+
+    .placeholder {
+      padding: 1rem;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--fg-muted);
+    }
+
+    /* Banners (cluster-break and freshness use the same callout shape) */
+    .banner {
+      margin: 0 0 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      font-size: 0.92rem;
+    }
+    .banner strong { font-weight: 600; }
+    .banner ul { margin: 0.35rem 0 0; padding-left: 1.2rem; }
+    .banner li { margin: 0.1rem 0; }
+    .banner.cluster { background: #fef9c3; border: 1px solid #eab308; color: #713f12; }
+    .banner.freshness { background: #ffedd5; border: 1px solid #fb923c; color: #7c2d12; }
+
+    /* Signals table */
+    table.signals {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    table.signals th,
+    table.signals td {
+      padding: 0.6rem 0.55rem;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+    }
+    table.signals th {
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--fg-faint);
+      border-bottom: 2px solid var(--border);
+    }
+    table.signals td.ticker { font-weight: 600; font-variant-numeric: tabular-nums; }
+    table.signals td.num,
+    table.signals th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    table.signals .submeta {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--fg-faint);
+      margin-top: 0.15rem;
+    }
+    table.signals tr.notes-row td {
+      border-bottom: 1px solid var(--border);
+      padding-top: 0;
+      padding-bottom: 0.55rem;
+      font-size: 0.78rem;
+      color: var(--fg-faint);
+      font-style: italic;
+    }
+    table.signals tr.notes-row td ul { margin: 0; padding-left: 1.1rem; }
+
+    /* State pills */
+    .pill {
+      display: inline-block;
+      padding: 0.18rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .pill.state-holding  { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+    .pill.state-tranche1 { background: #fef9c3; color: #854d0e; border-color: #facc15; }
+    .pill.state-tranche2 { background: #ffedd5; color: #9a3412; border-color: #fb923c; }
+    .pill.state-tranche3 { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+    .pill.cluster-flag   { background: #fef9c3; color: #713f12; border-color: #eab308; }
+    .pill.cluster-quiet  { background: var(--bg-soft); color: var(--fg-faint); border-color: var(--border); }
+
+    /* Assumptions block */
+    details.assumptions {
+      margin-top: 1.75rem;
+      font-size: 0.85rem;
+      color: var(--fg-muted);
+    }
+    details.assumptions summary {
+      cursor: pointer;
+      color: var(--fg-muted);
+      font-weight: 600;
+    }
+    details.assumptions ul { margin: 0.4rem 0 0 0; padding-left: 1.2rem; }
+    details.assumptions li { margin: 0.15rem 0; }
+    details.assumptions code { font-size: 0.85em; background: var(--bg-soft); padding: 0 0.25rem; border-radius: 3px; }
+
+    footer {
+      margin-top: 2.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--fg-faint);
+    }
+    footer p { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Parabolic Scale-Out Monitor</h1>
+    <p class="sub">Systematic tranche-state signals for selected names in extended trends.</p>
+    <p class="meta">Generated: <time id="generated">&mdash;</time></p>
+  </header>
+
+  <section id="freshness-banner" class="banner freshness" hidden>
+    <strong>Data freshness check:</strong>
+    <ul id="freshness-detail"></ul>
+  </section>
+
+  <section id="cluster-banner" class="banner cluster" hidden>
+    <strong>Semiconductor cluster break:</strong> <span id="cluster-detail"></span>
+  </section>
+
+  <main id="signals">
+    <div class="placeholder">Loading signals&hellip;</div>
+  </main>
+
+  <details class="assumptions" id="assumptions-block" hidden>
+    <summary>Assumptions and definitions</summary>
+    <ul id="assumptions-list"></ul>
+  </details>
+
+  <footer>
+    <p>Illustrative systematic signals &mdash; not investment advice.</p>
+  </footer>
+
+  <script>
+    // PRELOADED_DATA placeholder. scripts/build.py replaces the line below at build time
+    // with the contents of data/signals.json. For local dev under `npx serve .`,
+    // this stays null and we fall back to fetch().
+    const PRELOADED_DATA = {"generatedAt":"2026-05-16T14:32:14+00:00","source":"https://phuazz.github.io/Portfolio-Command-Centre/data/history.json","assumptions":{"tranche1":{"extensionPct":0.05,"highLookback":20,"highProximityPct":0.03},"confirmedClose":"Latest bar in upstream history.json. Weekend-stamped bars are used as-is and flagged in notes; never use intraday values.","priceBasis":"Close (c), not adjusted close (ac)."},"freshness":{"asOfBuild":"2026-05-16T14:32:14+00:00","staleThresholdDays":5,"maxBarAgeDays":1.61,"staleTickers":[],"weekendStampedTickers":[]},"cluster":{"semiconductor":{"members":["4004.T","INTC","MRVL","MU","SOI.PA"],"brokenCount":3,"clusterBreak":true,"rule":"Two or more cluster members in Tranche 2 or beyond."}},"tickers":[{"ticker":"MU","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.04,"isWeekendStamped":false,"isStale":false,"lastClose":724.66,"ema8":726.1189,"ema21":629.1807,"ema50":526.8406,"ema200":347.6058,"macd":{"line":88.424286,"signal":73.765516,"hist":14.65877},"recentHigh":803.63,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":629.1807},"distanceToTrigger":0.151752,"cluster":"semiconductor","barCount":2515,"notes":["Price series may be split-adjusted - verify absolute levels independently."],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"INTC","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.04,"isWeekendStamped":false,"isStale":false,"lastClose":108.77,"ema8":113.5848,"ema21":99.2441,"ema50":78.8385,"ema200":50.5885,"macd":{"line":14.995677,"signal":14.887619,"hist":0.108057},"recentHigh":129.44,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":99.2441},"distanceToTrigger":0.095985,"cluster":"semiconductor","barCount":2515,"notes":[],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"SOI.PA","lastBarDate":"2026-05-15","lastBarUnix":1778828400,"lastBarWeekday":"Friday","barAgeDays":1.31,"isWeekendStamped":false,"isStale":false,"lastClose":148.05,"ema8":149.2968,"ema21":129.2854,"ema50":97.4196,"ema200":59.8264,"macd":{"line":21.653332,"signal":22.249765,"hist":-0.596433},"recentHigh":171.35,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":129.2854},"distanceToTrigger":0.145141,"cluster":"semiconductor","barCount":2561,"notes":[],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"4004.T","lastBarDate":"2026-05-15","lastBarUnix":1778803200,"lastBarWeekday":"Friday","barAgeDays":1.61,"isWeekendStamped":false,"isStale":false,"lastClose":17200.0,"ema8":16844.8208,"ema21":15146.4384,"ema50":13190.2845,"ema200":8838.2228,"macd":{"line":1504.878799,"signal":1188.663683,"hist":316.215116},"recentHigh":18690.0,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":16844.8208},"distanceToTrigger":0.021085,"cluster":"semiconductor","barCount":2464,"notes":[],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"NOK","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.04,"isWeekendStamped":false,"isStale":false,"lastClose":13.95,"ema8":13.6702,"ema21":12.4795,"ema50":10.7521,"ema200":7.7535,"macd":{"line":1.189235,"signal":1.112742,"hist":0.076493},"recentHigh":14.71,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":13.6702},"distanceToTrigger":0.020466,"cluster":null,"barCount":2515,"notes":[]},{"ticker":"MRVL","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.04,"isWeekendStamped":false,"isStale":false,"lastClose":176.89,"ema8":172.7163,"ema21":160.4851,"ema50":136.8926,"ema200":101.197,"macd":{"line":13.634804,"signal":14.26732,"hist":-0.632516},"recentHigh":182.58,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":172.7163},"distanceToTrigger":0.024165,"cluster":"semiconductor","barCount":2515,"notes":[],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"LIFE","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.04,"isWeekendStamped":false,"isStale":false,"lastClose":21.71,"ema8":23.8544,"ema21":21.3033,"ema50":17.6083,"ema200":null,"macd":{"line":2.798502,"signal":2.927163,"hist":-0.128661},"recentHigh":30.59,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":21.3033},"distanceToTrigger":0.01909,"cluster":null,"barCount":75,"notes":["Limited history (75 bars) - EMA 200 unavailable."]}]};
+
+    const STATE_LABEL = {
+      holding:  "Holding",
+      tranche1: "Tranche 1",
+      tranche2: "Tranche 2",
+      tranche3: "Tranche 3",
+    };
+
+    async function loadSignals() {
+      if (PRELOADED_DATA) return PRELOADED_DATA;
+      try {
+        const r = await fetch("data/signals.json", { cache: "no-store" });
+        if (!r.ok) throw new Error("fetch failed: " + r.status);
+        return await r.json();
+      } catch (e) {
+        return { error: e.message, generatedAt: null, tickers: [] };
+      }
+    }
+
+    function fmtNum(v, decimals) {
+      if (v === null || v === undefined) return "—";
+      if (decimals === undefined) decimals = 2;
+      return Number(v).toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      });
+    }
+
+    function chooseDecimals(v) {
+      // Light heuristic: large absolute values (e.g. 4004.T at 17,200 JPY) read better with no decimals.
+      const a = Math.abs(v);
+      if (a >= 1000) return 0;
+      if (a >= 100) return 2;
+      return 2;
+    }
+
+    function pctSigned(x) {
+      const sign = x >= 0 ? "+" : "−"; // unicode minus
+      return sign + (Math.abs(x) * 100).toFixed(2) + "%";
+    }
+
+    function triggerLabel(level) {
+      return { ema8: "EMA 8", ema21: "EMA 21", ema50: "EMA 50", ema200: "EMA 200" }[level] || level;
+    }
+
+    function distanceDescription(state, distance) {
+      // distance is signed: positive = price above the trigger level (cushion).
+      const pct = (Math.abs(distance) * 100).toFixed(2) + "%";
+      if (state === "holding" || state === "tranche1") {
+        return distance >= 0
+          ? pct + " cushion above EMA 8 break"
+          : pct + " below EMA 8";
+      }
+      if (state === "tranche2") {
+        return distance >= 0
+          ? pct + " cushion above EMA 21 break"
+          : pct + " below EMA 21";
+      }
+      // tranche3
+      return pct + " below EMA 21 reclaim level";
+    }
+
+    function renderClusterBanner(payload) {
+      const sect = document.getElementById("cluster-banner");
+      const detail = document.getElementById("cluster-detail");
+      const semi = payload.cluster && payload.cluster.semiconductor;
+      if (!semi || !semi.clusterBreak) {
+        sect.hidden = true;
+        return;
+      }
+      sect.hidden = false;
+      detail.textContent =
+        semi.brokenCount + " of " + semi.members.length +
+        " semiconductor-cluster names in Tranche 2 or beyond (" +
+        semi.members.join(", ") + ").";
+    }
+
+    function renderFreshness(payload) {
+      const sect = document.getElementById("freshness-banner");
+      const list = document.getElementById("freshness-detail");
+      const items = [];
+      const f = payload.freshness;
+
+      // Build-age check at page load (catches the case where the cron has not
+      // run for a while and the inlined data is older than the build cycle).
+      if (payload.generatedAt) {
+        const built = new Date(payload.generatedAt);
+        const ageHours = (Date.now() - built.getTime()) / 3600000;
+        if (!isNaN(ageHours) && ageHours > 36) {
+          const days = ageHours / 24;
+          items.push(
+            "This build is " + (days >= 2 ? days.toFixed(1) + " days" : ageHours.toFixed(1) + " hours") +
+            " old. The daily refresh may have failed."
+          );
+        }
+      }
+
+      if (f && f.staleTickers && f.staleTickers.length) {
+        items.push(
+          "Stale upstream bars (older than " + f.staleThresholdDays + " days): " +
+          f.staleTickers.join(", ") + "."
+        );
+      }
+      if (f && f.weekendStampedTickers && f.weekendStampedTickers.length) {
+        items.push(
+          "Latest bar stamped on a weekend (likely upstream artefact): " +
+          f.weekendStampedTickers.join(", ") + "."
+        );
+      }
+
+      if (items.length === 0) {
+        sect.hidden = true;
+        list.innerHTML = "";
+        return;
+      }
+      sect.hidden = false;
+      list.innerHTML = items.map(function (t) { return "<li>" + t + "</li>"; }).join("");
+    }
+
+    function renderAssumptions(payload) {
+      const block = document.getElementById("assumptions-block");
+      const list = document.getElementById("assumptions-list");
+      const a = payload.assumptions;
+      if (!a) { block.hidden = true; return; }
+      const items = [];
+      items.push("Tranche 1 trigger: close at least " + (a.tranche1.extensionPct * 100).toFixed(0) +
+                 "% above EMA 8 AND within " + (a.tranche1.highProximityPct * 100).toFixed(0) +
+                 "% of the trailing " + a.tranche1.highLookback + "-day close-high.");
+      items.push("Tranche 2 trigger: confirmed daily close below EMA 8.");
+      items.push("Tranche 3 trigger: confirmed daily close below EMA 21 (trail active).");
+      items.push("Confirmed close: " + a.confirmedClose);
+      items.push("Price basis: " + a.priceBasis);
+      if (payload.cluster && payload.cluster.semiconductor) {
+        items.push("Cluster rule: " + payload.cluster.semiconductor.rule +
+                   " Members: " + payload.cluster.semiconductor.members.join(", ") + ".");
+      }
+      if (payload.freshness && payload.freshness.staleThresholdDays) {
+        items.push("Freshness threshold: a ticker is flagged stale when its latest bar is more than " +
+                   payload.freshness.staleThresholdDays + " days old. The build banner also fires if the " +
+                   "page itself was built more than 36 hours ago.");
+      }
+      list.innerHTML = items.map(function (t) { return "<li>" + t + "</li>"; }).join("");
+      block.hidden = false;
+    }
+
+    function renderTable(payload) {
+      const root = document.getElementById("signals");
+      if (payload.error) {
+        root.innerHTML = '<div class="placeholder">No signals available yet (' + payload.error + ').</div>';
+        return;
+      }
+      const rows = payload.tickers || [];
+      if (rows.length === 0) {
+        root.innerHTML = '<div class="placeholder">No signals available yet.</div>';
+        return;
+      }
+
+      const html = ['<table class="signals"><thead><tr>',
+        '<th>Ticker</th>',
+        '<th>State</th>',
+        '<th class="num">Last close</th>',
+        '<th class="num">EMA 8 / EMA 21</th>',
+        '<th>Active trigger</th>',
+        '<th class="num">Distance</th>',
+        '<th>Cluster</th>',
+        '</tr></thead><tbody>'];
+
+      for (const r of rows) {
+        if (r.error) {
+          html.push('<tr><td class="ticker">' + r.ticker + '</td>' +
+                    '<td colspan="6"><em>' + r.error + '</em></td></tr>');
+          continue;
+        }
+        const dp = chooseDecimals(r.lastClose);
+        const stateClass = "state-" + r.state;
+        const trigLevel = triggerLabel(r.activeTrigger.level);
+        const trigValue = fmtNum(r.activeTrigger.value, dp);
+        const distDesc = distanceDescription(r.state, r.distanceToTrigger);
+
+        let clusterCell;
+        if (r.cluster === "semiconductor") {
+          if (r.clusterBreak) {
+            clusterCell = '<span class="pill cluster-flag" title="2+ cluster members in Tranche 2 or beyond">Semi &middot; break</span>';
+          } else {
+            clusterCell = '<span class="pill cluster-quiet">Semi</span>';
+          }
+        } else {
+          clusterCell = '<span style="color:var(--fg-faint)">—</span>';
+        }
+
+        html.push('<tr>',
+          '<td class="ticker">' + r.ticker + '</td>',
+          '<td><span class="pill ' + stateClass + '">' + STATE_LABEL[r.state] + '</span>' +
+            '<span class="submeta">' + r.stateLabel + '</span></td>',
+          '<td class="num">' + fmtNum(r.lastClose, dp) +
+            '<span class="submeta">' + r.lastBarDate + '</span></td>',
+          '<td class="num">' + fmtNum(r.ema8, dp) +
+            '<span class="submeta">' + fmtNum(r.ema21, dp) + '</span></td>',
+          '<td>' + trigLevel +
+            '<span class="submeta">@ ' + trigValue + '</span></td>',
+          '<td class="num">' + pctSigned(r.distanceToTrigger) +
+            '<span class="submeta">' + distDesc + '</span></td>',
+          '<td>' + clusterCell + '</td>',
+          '</tr>');
+
+        if (r.notes && r.notes.length) {
+          html.push('<tr class="notes-row"><td></td><td colspan="6"><ul>');
+          for (const n of r.notes) html.push('<li>' + n + '</li>');
+          html.push('</ul></td></tr>');
+        }
+      }
+
+      html.push('</tbody></table>');
+      root.innerHTML = html.join("");
+    }
+
+    function renderGenerated(payload) {
+      const el = document.getElementById("generated");
+      if (!payload.generatedAt) { el.textContent = "—"; return; }
+      try {
+        const d = new Date(payload.generatedAt);
+        el.dateTime = payload.generatedAt;
+        el.textContent = d.toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC").replace("Z", " UTC");
+      } catch (e) {
+        el.textContent = payload.generatedAt;
+      }
+    }
+
+    function render(payload) {
+      renderGenerated(payload);
+      renderFreshness(payload);
+      renderClusterBanner(payload);
+      renderAssumptions(payload);
+      renderTable(payload);
+    }
+
+    loadSignals().then(render);
+  </script>
+</body>
+</html>
