@@ -19,10 +19,24 @@ HISTORY_URL = "https://phuazz.github.io/Portfolio-Command-Centre/data/history.js
 TICKERS: list[str] = ["MU", "INTC", "SOI.PA", "4004.T", "NOK", "MRVL", "LIFE"]
 CLUSTER_SEMI: set[str] = {"MU", "INTC", "SOI.PA", "4004.T", "MRVL"}
 
+# Reference tickers - computed and surfaced separately, never classified as
+# a tranche row. SLV is the silver benchmark used by the extension chart.
+REFERENCE_TICKERS: list[str] = ["SLV"]
+
 # Tranche 1 thresholds. Surfaced in output so the assumption is transparent.
 T1_EXTENSION_PCT = 0.05       # close at least 5% above EMA 8
 T1_HIGH_LOOKBACK = 20         # trailing N daily closes
 T1_HIGH_PROXIMITY_PCT = 0.03  # close within 3% of trailing high
+
+# Silver's January 2026 parabolic peak, expressed as percent above its
+# 200-day moving average. Used as a fixed reference line on the chart.
+SILVER_JAN_PEAK_PCT = 80
+
+# A ticker is flagged "parabola broken" when it has fallen out of trend
+# strongly enough that the routine Tranche 2 treatment understates its
+# situation. Definition: in Tranche 2 or beyond AND drawdown from the
+# trailing 20-day close-high exceeds this threshold.
+PARABOLA_BROKEN_DRAWDOWN = 0.25
 
 # Freshness thresholds.
 STALE_BAR_THRESHOLD_DAYS = 5  # warn if a ticker's latest bar is older than this
@@ -148,6 +162,20 @@ def compute_for_ticker(ticker: str, raw: dict[str, Any], now_utc: datetime) -> d
 
     state, state_label = classify(last_close, ema8_v, ema21_v, recent_high)
 
+    # Extension above EMA 200, expressed as percent (e.g. 80 means 80%
+    # above EMA 200). None when EMA 200 is not available.
+    ext_pct_ema200: float | None = None
+    if ema200_v is not None and ema200_v > 0:
+        ext_pct_ema200 = (last_close / ema200_v - 1.0) * 100.0
+
+    # Parabola-broken flag: distinguishes a routine Tranche 2 from a name
+    # that has fallen meaningfully out of its parabolic move.
+    drawdown_from_high = (recent_high - last_close) / recent_high if recent_high > 0 else 0.0
+    parabola_broken = (
+        state in ("tranche2", "tranche3")
+        and drawdown_from_high > PARABOLA_BROKEN_DRAWDOWN
+    )
+
     # The "active trigger" is the level whose break (or reclaim) defines the next transition.
     if state in ("holding", "tranche1"):
         trigger_level, trigger_value = "ema8", ema8_v
@@ -174,6 +202,10 @@ def compute_for_ticker(ticker: str, raw: dict[str, Any], now_utc: datetime) -> d
         notes.append(
             f"Latest bar is {bar_age_days:.1f} days old - upstream data may be stale."
         )
+    if parabola_broken:
+        notes.append(
+            f"Parabola broken - {drawdown_from_high * 100:.1f}% below the trailing 20-day high."
+        )
 
     return {
         "ticker": ticker,
@@ -188,6 +220,9 @@ def compute_for_ticker(ticker: str, raw: dict[str, Any], now_utc: datetime) -> d
         "ema21": round(ema21_v, 4),
         "ema50": round(ema50_v, 4) if ema50_v is not None else None,
         "ema200": round(ema200_v, 4) if ema200_v is not None else None,
+        "extPctEma200": round(ext_pct_ema200, 2) if ext_pct_ema200 is not None else None,
+        "drawdownFromRecentHigh": round(drawdown_from_high * 100, 2),
+        "parabolaBroken": parabola_broken,
         "macd": macd_vals,
         "recentHigh": round(recent_high, 4),
         "recentHighLookback": min(T1_HIGH_LOOKBACK, len(closes)),
@@ -218,17 +253,36 @@ def main() -> int:
 
     rows: list[dict[str, Any]] = [compute_for_ticker(t, raw, now_utc) for t in TICKERS]
 
+    # Reference tickers (e.g. SLV for the silver-extension chart) - computed
+    # with the same machinery, but surfaced separately so they never appear
+    # in the tranche table.
+    reference: dict[str, dict[str, Any]] = {}
+    for t in REFERENCE_TICKERS:
+        row = compute_for_ticker(t, raw, now_utc)
+        if "error" in row:
+            reference[t] = {"ticker": t, "error": row["error"]}
+        else:
+            reference[t] = {
+                "ticker": t,
+                "lastBarDate": row["lastBarDate"],
+                "lastClose": row["lastClose"],
+                "ema200": row["ema200"],
+                "extPctEma200": row["extPctEma200"],
+            }
+
     # Cluster flag: semiconductor cluster breaks if 2+ members are in Tranche 2 or beyond.
-    semi_broken_count = sum(
-        1 for r in rows
+    semi_broken_members = [
+        r["ticker"] for r in rows
         if r.get("cluster") == "semiconductor"
         and r.get("state") in ("tranche2", "tranche3")
-    )
+    ]
+    semi_broken_count = len(semi_broken_members)
     cluster_break = semi_broken_count >= 2
     for r in rows:
         if r.get("cluster") == "semiconductor":
             r["clusterBreak"] = cluster_break
             r["clusterBrokenCount"] = semi_broken_count
+            r["clusterBrokenMembers"] = semi_broken_members
 
     # Aggregate freshness flags across all valid rows.
     valid_ages = [r["barAgeDays"] for r in rows if "barAgeDays" in r]
@@ -261,11 +315,14 @@ def main() -> int:
         "cluster": {
             "semiconductor": {
                 "members": sorted(CLUSTER_SEMI),
+                "brokenMembers": sorted(semi_broken_members),
                 "brokenCount": semi_broken_count,
                 "clusterBreak": cluster_break,
                 "rule": "Two or more cluster members in Tranche 2 or beyond.",
             },
         },
+        "silverJanPeakPct": SILVER_JAN_PEAK_PCT,
+        "reference": reference,
         "tickers": rows,
     }
 

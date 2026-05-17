@@ -104,12 +104,36 @@
       white-space: nowrap;
       border: 1px solid transparent;
     }
-    .pill.state-holding  { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
-    .pill.state-tranche1 { background: #fef9c3; color: #854d0e; border-color: #facc15; }
-    .pill.state-tranche2 { background: #ffedd5; color: #9a3412; border-color: #fb923c; }
-    .pill.state-tranche3 { background: #fee2e2; color: #991b1b; border-color: #f87171; }
-    .pill.cluster-flag   { background: #fef9c3; color: #713f12; border-color: #eab308; }
-    .pill.cluster-quiet  { background: var(--bg-soft); color: var(--fg-faint); border-color: var(--border); }
+    .pill.state-holding         { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+    .pill.state-tranche1        { background: #fef9c3; color: #854d0e; border-color: #facc15; }
+    .pill.state-tranche2        { background: #ffedd5; color: #9a3412; border-color: #fb923c; }
+    .pill.state-tranche2-broken { background: #fecaca; color: #7f1d1d; border-color: #dc2626; }
+    .pill.state-tranche3        { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+    .pill.cluster-quiet         { background: var(--bg-soft); color: var(--fg-faint); border-color: var(--border); }
+
+    /* Extension chart */
+    .ext-chart {
+      margin: 0 0 1.5rem;
+      padding: 0.5rem 0 0;
+    }
+    .ext-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      font-family: inherit;
+    }
+    .ext-title    { font-size: 13px; font-weight: 600; fill: var(--fg); }
+    .ext-subtitle { font-size: 11px; font-weight: 400; fill: var(--fg-muted); }
+    .ext-label    { font-size: 12px; font-weight: 600; fill: var(--fg); font-variant-numeric: tabular-nums; }
+    .ext-value    { font-size: 11px; font-weight: 400; fill: var(--fg-muted); font-variant-numeric: tabular-nums; }
+    .ext-unavail  { font-size: 11px; font-style: italic; fill: var(--fg-faint); }
+    .ext-axis     { stroke: var(--border); stroke-width: 1; }
+    .ext-peak-line  { stroke: #6b7280; stroke-width: 1; stroke-dasharray: 4 3; }
+    .ext-peak-label { font-size: 11px; font-weight: 600; fill: #475569; }
+    .ext-divider    { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 2; }
+    .ext-bar-above  { fill: #dc2626; }
+    .ext-bar-below  { fill: #f59e0b; }
+    .ext-bar-ref    { fill: #94a3b8; }
 
     /* Assumptions block */
     details.assumptions {
@@ -152,6 +176,8 @@
     <strong>Semiconductor cluster break:</strong> <span id="cluster-detail"></span>
   </section>
 
+  <section id="ext-chart" class="ext-chart" hidden></section>
+
   <main id="signals">
     <div class="placeholder">Loading signals&hellip;</div>
   </main>
@@ -169,7 +195,7 @@
     // PRELOADED_DATA placeholder. scripts/build.py replaces the line below at build time
     // with the contents of data/signals.json. For local dev under `npx serve .`,
     // this stays null and we fall back to fetch().
-    const PRELOADED_DATA = {"generatedAt":"2026-05-16T14:51:38+00:00","source":"https://phuazz.github.io/Portfolio-Command-Centre/data/history.json","assumptions":{"tranche1":{"extensionPct":0.05,"highLookback":20,"highProximityPct":0.03},"confirmedClose":"Latest bar in upstream history.json. Weekend-stamped bars are used as-is and flagged in notes; never use intraday values.","priceBasis":"Close (c), not adjusted close (ac)."},"freshness":{"asOfBuild":"2026-05-16T14:51:38+00:00","staleThresholdDays":5,"maxBarAgeDays":1.62,"staleTickers":[],"weekendStampedTickers":[]},"cluster":{"semiconductor":{"members":["4004.T","INTC","MRVL","MU","SOI.PA"],"brokenCount":3,"clusterBreak":true,"rule":"Two or more cluster members in Tranche 2 or beyond."}},"tickers":[{"ticker":"MU","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.06,"isWeekendStamped":false,"isStale":false,"lastClose":724.66,"ema8":726.1189,"ema21":629.1807,"ema50":526.8406,"ema200":347.6058,"macd":{"line":88.424286,"signal":73.765516,"hist":14.65877},"recentHigh":803.63,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":629.1807},"distanceToTrigger":0.151752,"cluster":"semiconductor","barCount":2515,"notes":["Price series may be split-adjusted - verify absolute levels independently."],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"INTC","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.06,"isWeekendStamped":false,"isStale":false,"lastClose":108.77,"ema8":113.5848,"ema21":99.2441,"ema50":78.8385,"ema200":50.5885,"macd":{"line":14.995677,"signal":14.887619,"hist":0.108057},"recentHigh":129.44,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":99.2441},"distanceToTrigger":0.095985,"cluster":"semiconductor","barCount":2515,"notes":[],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"SOI.PA","lastBarDate":"2026-05-15","lastBarUnix":1778828400,"lastBarWeekday":"Friday","barAgeDays":1.33,"isWeekendStamped":false,"isStale":false,"lastClose":148.05,"ema8":149.2968,"ema21":129.2854,"ema50":97.4196,"ema200":59.8264,"macd":{"line":21.653332,"signal":22.249765,"hist":-0.596433},"recentHigh":171.35,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":129.2854},"distanceToTrigger":0.145141,"cluster":"semiconductor","barCount":2561,"notes":[],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"4004.T","lastBarDate":"2026-05-15","lastBarUnix":1778803200,"lastBarWeekday":"Friday","barAgeDays":1.62,"isWeekendStamped":false,"isStale":false,"lastClose":17200.0,"ema8":16844.8208,"ema21":15146.4384,"ema50":13190.2845,"ema200":8838.2228,"macd":{"line":1504.878799,"signal":1188.663683,"hist":316.215116},"recentHigh":18690.0,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":16844.8208},"distanceToTrigger":0.021085,"cluster":"semiconductor","barCount":2464,"notes":[],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"NOK","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.06,"isWeekendStamped":false,"isStale":false,"lastClose":13.95,"ema8":13.6702,"ema21":12.4795,"ema50":10.7521,"ema200":7.7535,"macd":{"line":1.189235,"signal":1.112742,"hist":0.076493},"recentHigh":14.71,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":13.6702},"distanceToTrigger":0.020466,"cluster":null,"barCount":2515,"notes":[]},{"ticker":"MRVL","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.06,"isWeekendStamped":false,"isStale":false,"lastClose":176.89,"ema8":172.7163,"ema21":160.4851,"ema50":136.8926,"ema200":101.197,"macd":{"line":13.634804,"signal":14.26732,"hist":-0.632516},"recentHigh":182.58,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":172.7163},"distanceToTrigger":0.024165,"cluster":"semiconductor","barCount":2515,"notes":[],"clusterBreak":true,"clusterBrokenCount":3},{"ticker":"LIFE","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.06,"isWeekendStamped":false,"isStale":false,"lastClose":21.71,"ema8":23.8544,"ema21":21.3033,"ema50":17.6083,"ema200":null,"macd":{"line":2.798502,"signal":2.927163,"hist":-0.128661},"recentHigh":30.59,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":21.3033},"distanceToTrigger":0.01909,"cluster":null,"barCount":75,"notes":["Limited history (75 bars) - EMA 200 unavailable."]}]};
+    const PRELOADED_DATA = {"generatedAt":"2026-05-17T04:28:11+00:00","source":"https://phuazz.github.io/Portfolio-Command-Centre/data/history.json","assumptions":{"tranche1":{"extensionPct":0.05,"highLookback":20,"highProximityPct":0.03},"confirmedClose":"Latest bar in upstream history.json. Weekend-stamped bars are used as-is and flagged in notes; never use intraday values.","priceBasis":"Close (c), not adjusted close (ac)."},"freshness":{"asOfBuild":"2026-05-17T04:28:11+00:00","staleThresholdDays":5,"maxBarAgeDays":2.19,"staleTickers":[],"weekendStampedTickers":[]},"cluster":{"semiconductor":{"members":["4004.T","INTC","MRVL","MU","SOI.PA"],"brokenMembers":["INTC","MU","SOI.PA"],"brokenCount":3,"clusterBreak":true,"rule":"Two or more cluster members in Tranche 2 or beyond."}},"silverJanPeakPct":80,"reference":{"SLV":{"ticker":"SLV","lastBarDate":"2026-05-15","lastClose":69.04,"ema200":60.4701,"extPctEma200":14.17}},"tickers":[{"ticker":"MU","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.62,"isWeekendStamped":false,"isStale":false,"lastClose":724.66,"ema8":726.1189,"ema21":629.1807,"ema50":526.8406,"ema200":347.6058,"extPctEma200":108.47,"drawdownFromRecentHigh":9.83,"parabolaBroken":false,"macd":{"line":88.424286,"signal":73.765516,"hist":14.65877},"recentHigh":803.63,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":629.1807},"distanceToTrigger":0.151752,"cluster":"semiconductor","barCount":2515,"notes":["Price series may be split-adjusted - verify absolute levels independently."],"clusterBreak":true,"clusterBrokenCount":3,"clusterBrokenMembers":["MU","INTC","SOI.PA"]},{"ticker":"INTC","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.62,"isWeekendStamped":false,"isStale":false,"lastClose":108.77,"ema8":113.5848,"ema21":99.2441,"ema50":78.8385,"ema200":50.5885,"extPctEma200":115.01,"drawdownFromRecentHigh":15.97,"parabolaBroken":false,"macd":{"line":14.995677,"signal":14.887619,"hist":0.108057},"recentHigh":129.44,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":99.2441},"distanceToTrigger":0.095985,"cluster":"semiconductor","barCount":2515,"notes":[],"clusterBreak":true,"clusterBrokenCount":3,"clusterBrokenMembers":["MU","INTC","SOI.PA"]},{"ticker":"SOI.PA","lastBarDate":"2026-05-15","lastBarUnix":1778828400,"lastBarWeekday":"Friday","barAgeDays":1.89,"isWeekendStamped":false,"isStale":false,"lastClose":148.05,"ema8":149.2968,"ema21":129.2854,"ema50":97.4196,"ema200":59.8264,"extPctEma200":147.47,"drawdownFromRecentHigh":13.6,"parabolaBroken":false,"macd":{"line":21.653332,"signal":22.249765,"hist":-0.596433},"recentHigh":171.35,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":129.2854},"distanceToTrigger":0.145141,"cluster":"semiconductor","barCount":2561,"notes":[],"clusterBreak":true,"clusterBrokenCount":3,"clusterBrokenMembers":["MU","INTC","SOI.PA"]},{"ticker":"4004.T","lastBarDate":"2026-05-15","lastBarUnix":1778803200,"lastBarWeekday":"Friday","barAgeDays":2.19,"isWeekendStamped":false,"isStale":false,"lastClose":17200.0,"ema8":16844.8208,"ema21":15146.4384,"ema50":13190.2845,"ema200":8838.2228,"extPctEma200":94.61,"drawdownFromRecentHigh":7.97,"parabolaBroken":false,"macd":{"line":1504.878799,"signal":1188.663683,"hist":316.215116},"recentHigh":18690.0,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":16844.8208},"distanceToTrigger":0.021085,"cluster":"semiconductor","barCount":2464,"notes":[],"clusterBreak":true,"clusterBrokenCount":3,"clusterBrokenMembers":["MU","INTC","SOI.PA"]},{"ticker":"NOK","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.62,"isWeekendStamped":false,"isStale":false,"lastClose":13.95,"ema8":13.6702,"ema21":12.4795,"ema50":10.7521,"ema200":7.7535,"extPctEma200":79.92,"drawdownFromRecentHigh":5.17,"parabolaBroken":false,"macd":{"line":1.189235,"signal":1.112742,"hist":0.076493},"recentHigh":14.71,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":13.6702},"distanceToTrigger":0.020466,"cluster":null,"barCount":2515,"notes":[]},{"ticker":"MRVL","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.62,"isWeekendStamped":false,"isStale":false,"lastClose":176.89,"ema8":172.7163,"ema21":160.4851,"ema50":136.8926,"ema200":101.197,"extPctEma200":74.8,"drawdownFromRecentHigh":3.12,"parabolaBroken":false,"macd":{"line":13.634804,"signal":14.26732,"hist":-0.632516},"recentHigh":182.58,"recentHighLookback":20,"state":"holding","stateLabel":"Above EMA 8 - holding","activeTrigger":{"level":"ema8","value":172.7163},"distanceToTrigger":0.024165,"cluster":"semiconductor","barCount":2515,"notes":[],"clusterBreak":true,"clusterBrokenCount":3,"clusterBrokenMembers":["MU","INTC","SOI.PA"]},{"ticker":"LIFE","lastBarDate":"2026-05-15","lastBarUnix":1778851800,"lastBarWeekday":"Friday","barAgeDays":1.62,"isWeekendStamped":false,"isStale":false,"lastClose":21.71,"ema8":23.8544,"ema21":21.3033,"ema50":17.6083,"ema200":null,"extPctEma200":null,"drawdownFromRecentHigh":29.03,"parabolaBroken":true,"macd":{"line":2.798502,"signal":2.927163,"hist":-0.128661},"recentHigh":30.59,"recentHighLookback":20,"state":"tranche2","stateLabel":"Below EMA 8 - Tranche 2 trigger met","activeTrigger":{"level":"ema21","value":21.3033},"distanceToTrigger":0.01909,"cluster":null,"barCount":75,"notes":["Limited history (75 bars) - EMA 200 unavailable.","Parabola broken - 29.0% below the trailing 20-day high."]}]};
 
     const STATE_LABEL = {
       holding:  "Holding",
@@ -216,20 +242,15 @@
     }
 
     function distanceDescription(state, distance) {
-      // distance is signed: positive = price above the trigger level (cushion).
-      const pct = (Math.abs(distance) * 100).toFixed(2) + "%";
+      // Short qualifier - adds information about direction without restating
+      // the numeric distance shown in the parent cell.
       if (state === "holding" || state === "tranche1") {
-        return distance >= 0
-          ? pct + " cushion above EMA 8 break"
-          : pct + " below EMA 8";
+        return distance >= 0 ? "cushion to EMA 8 break" : "EMA 8 breached";
       }
       if (state === "tranche2") {
-        return distance >= 0
-          ? pct + " cushion above EMA 21 break"
-          : pct + " below EMA 21";
+        return distance >= 0 ? "cushion to EMA 21 break" : "EMA 21 breached";
       }
-      // tranche3
-      return pct + " below EMA 21 reclaim level";
+      return "to EMA 21 reclaim";
     }
 
     function renderClusterBanner(payload) {
@@ -241,10 +262,15 @@
         return;
       }
       sect.hidden = false;
+      // Prefer brokenMembers if present (introduced after the initial release);
+      // fall back to brokenCount-only phrasing if an older build is in play.
+      const broken = (semi.brokenMembers && semi.brokenMembers.length)
+        ? semi.brokenMembers
+        : null;
       detail.textContent =
         semi.brokenCount + " of " + semi.members.length +
-        " semiconductor-cluster names in Tranche 2 or beyond (" +
-        semi.members.join(", ") + ").";
+        " semiconductor-cluster names in Tranche 2 or beyond" +
+        (broken ? " (" + broken.join(", ") + ")" : "") + ".";
     }
 
     function renderFreshness(payload) {
@@ -344,26 +370,27 @@
           continue;
         }
         const dp = chooseDecimals(r.lastClose);
-        const stateClass = "state-" + r.state;
+        // Parabola-broken names get a distinct pill so they do not read as a
+        // routine Tranche 2; the state code itself is unchanged.
+        const isBroken = r.parabolaBroken && r.state === "tranche2";
+        const stateClass = isBroken ? "state-tranche2-broken" : "state-" + r.state;
+        const stateSub = isBroken
+          ? "Parabola broken &mdash; beyond routine Tranche 2"
+          : r.stateLabel;
         const trigLevel = triggerLabel(r.activeTrigger.level);
         const trigValue = fmtNum(r.activeTrigger.value, dp);
         const distDesc = distanceDescription(r.state, r.distanceToTrigger);
 
-        let clusterCell;
-        if (r.cluster === "semiconductor") {
-          if (r.clusterBreak) {
-            clusterCell = '<span class="pill cluster-flag" title="2+ cluster members in Tranche 2 or beyond">Semi &middot; break</span>';
-          } else {
-            clusterCell = '<span class="pill cluster-quiet">Semi</span>';
-          }
-        } else {
-          clusterCell = '<span style="color:var(--fg-faint)">—</span>';
-        }
+        // Cluster column: static membership tag only. Break status lives in
+        // the banner; repeating it on every chip duplicates information.
+        const clusterCell = (r.cluster === "semiconductor")
+          ? '<span class="pill cluster-quiet">Semi</span>'
+          : '<span style="color:var(--fg-faint)">&mdash;</span>';
 
         html.push('<tr>',
           '<td class="ticker">' + r.ticker + '</td>',
           '<td><span class="pill ' + stateClass + '">' + STATE_LABEL[r.state] + '</span>' +
-            '<span class="submeta">' + r.stateLabel + '</span></td>',
+            '<span class="submeta">' + stateSub + '</span></td>',
           '<td class="num">' + fmtNum(r.lastClose, dp) +
             '<span class="submeta">' + r.lastBarDate + '</span></td>',
           '<td class="num">' + fmtNum(r.ema8, dp) +
@@ -398,10 +425,102 @@
       }
     }
 
+    function renderChart(payload) {
+      const root = document.getElementById("ext-chart");
+      const rows = (payload.tickers || []).map(function (r) {
+        return {
+          ticker: r.ticker,
+          ext: (typeof r.extPctEma200 === "number") ? r.extPctEma200 : null,
+          isRef: false,
+        };
+      });
+      // Sort: numeric extension descending, nulls last (ticker alpha for stability).
+      rows.sort(function (a, b) {
+        if (a.ext === null && b.ext === null) return a.ticker.localeCompare(b.ticker);
+        if (a.ext === null) return 1;
+        if (b.ext === null) return -1;
+        return b.ext - a.ext;
+      });
+      // Append SLV reference row at the bottom, visually separated.
+      const slv = payload.reference && payload.reference.SLV;
+      if (slv && typeof slv.extPctEma200 === "number") {
+        rows.push({ ticker: "SLV", ext: slv.extPctEma200, isRef: true });
+      }
+      if (rows.length === 0) { root.hidden = true; return; }
+
+      const peakPct = (typeof payload.silverJanPeakPct === "number")
+        ? payload.silverJanPeakPct : 80;
+
+      // X-axis: 0 to max-data padded, rounded up to next multiple of 20.
+      const numericExts = rows
+        .filter(function (r) { return r.ext !== null; })
+        .map(function (r) { return r.ext; });
+      const dataMax = Math.max.apply(null, numericExts.concat([peakPct]));
+      const xMax = Math.max(20, Math.ceil((dataMax * 1.08) / 20) * 20);
+
+      // Layout
+      const W = 800;
+      const margin = { left: 72, right: 72, top: 60, bottom: 24 };
+      const rowH = 30;
+      const plotW = W - margin.left - margin.right;
+      const refIdx = rows.findIndex(function (r) { return r.isRef; });
+      const plotH = rows.length * rowH + (refIdx >= 0 ? 8 : 0);
+      const H = margin.top + plotH + margin.bottom;
+      const xScale = function (v) { return margin.left + (v / xMax) * plotW; };
+
+      const out = [];
+      out.push('<svg viewBox="0 0 ' + W + ' ' + H + '" class="ext-svg" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Extension above 200-day moving average versus silver January peak">');
+
+      out.push('<text x="' + margin.left + '" y="22" class="ext-title">How stretched is each name versus silver in January</text>');
+      out.push('<text x="' + margin.left + '" y="40" class="ext-subtitle">Price distance above the 200-day moving average</text>');
+
+      // Plot baseline (x=0)
+      out.push('<line x1="' + margin.left + '" y1="' + margin.top + '" x2="' + margin.left + '" y2="' + (margin.top + plotH) + '" class="ext-axis"/>');
+
+      // Peak reference line at +80%
+      const peakX = xScale(peakPct);
+      out.push('<line x1="' + peakX.toFixed(1) + '" y1="' + (margin.top - 6) + '" x2="' + peakX.toFixed(1) + '" y2="' + (margin.top + plotH) + '" class="ext-peak-line"/>');
+      out.push('<text x="' + peakX.toFixed(1) + '" y="' + (margin.top - 10) + '" class="ext-peak-label" text-anchor="middle">Silver Jan peak &asymp; +' + peakPct + '%</text>');
+
+      let yCursor = margin.top;
+      rows.forEach(function (r, i) {
+        // Divider above the reference row.
+        if (r.isRef) {
+          out.push('<line x1="' + margin.left + '" y1="' + (yCursor + 2).toFixed(1) + '" x2="' + (W - margin.right) + '" y2="' + (yCursor + 2).toFixed(1) + '" class="ext-divider"/>');
+          yCursor += 8;
+        }
+        const cy = yCursor + rowH / 2;
+        const labelY = cy + 4;
+        out.push('<text x="' + (margin.left - 8) + '" y="' + labelY.toFixed(1) + '" class="ext-label" text-anchor="end">' + r.ticker + '</text>');
+
+        if (r.ext === null) {
+          out.push('<text x="' + (margin.left + 6) + '" y="' + labelY.toFixed(1) + '" class="ext-unavail">EMA 200 unavailable</text>');
+        } else {
+          const xEnd = xScale(r.ext);
+          const barW = Math.max(1, xEnd - margin.left);
+          const barH = 16;
+          const barY = cy - barH / 2;
+          let cls = "ext-bar-below";
+          if (r.isRef) cls = "ext-bar-ref";
+          else if (r.ext >= peakPct) cls = "ext-bar-above";
+          out.push('<rect x="' + margin.left + '" y="' + barY.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + barH + '" class="' + cls + '"/>');
+          const valStr = (r.ext >= 0 ? "+" : "−") + Math.abs(r.ext).toFixed(1) + "%";
+          out.push('<text x="' + (xEnd + 6).toFixed(1) + '" y="' + labelY.toFixed(1) + '" class="ext-value">' + valStr + (r.isRef ? " (reference)" : "") + '</text>');
+        }
+
+        yCursor += rowH;
+      });
+
+      out.push('</svg>');
+      root.innerHTML = out.join("");
+      root.hidden = false;
+    }
+
     function render(payload) {
       renderGenerated(payload);
       renderFreshness(payload);
       renderClusterBanner(payload);
+      renderChart(payload);
       renderAssumptions(payload);
       renderTable(payload);
     }

@@ -104,12 +104,36 @@
       white-space: nowrap;
       border: 1px solid transparent;
     }
-    .pill.state-holding  { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
-    .pill.state-tranche1 { background: #fef9c3; color: #854d0e; border-color: #facc15; }
-    .pill.state-tranche2 { background: #ffedd5; color: #9a3412; border-color: #fb923c; }
-    .pill.state-tranche3 { background: #fee2e2; color: #991b1b; border-color: #f87171; }
-    .pill.cluster-flag   { background: #fef9c3; color: #713f12; border-color: #eab308; }
-    .pill.cluster-quiet  { background: var(--bg-soft); color: var(--fg-faint); border-color: var(--border); }
+    .pill.state-holding         { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+    .pill.state-tranche1        { background: #fef9c3; color: #854d0e; border-color: #facc15; }
+    .pill.state-tranche2        { background: #ffedd5; color: #9a3412; border-color: #fb923c; }
+    .pill.state-tranche2-broken { background: #fecaca; color: #7f1d1d; border-color: #dc2626; }
+    .pill.state-tranche3        { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+    .pill.cluster-quiet         { background: var(--bg-soft); color: var(--fg-faint); border-color: var(--border); }
+
+    /* Extension chart */
+    .ext-chart {
+      margin: 0 0 1.5rem;
+      padding: 0.5rem 0 0;
+    }
+    .ext-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      font-family: inherit;
+    }
+    .ext-title    { font-size: 13px; font-weight: 600; fill: var(--fg); }
+    .ext-subtitle { font-size: 11px; font-weight: 400; fill: var(--fg-muted); }
+    .ext-label    { font-size: 12px; font-weight: 600; fill: var(--fg); font-variant-numeric: tabular-nums; }
+    .ext-value    { font-size: 11px; font-weight: 400; fill: var(--fg-muted); font-variant-numeric: tabular-nums; }
+    .ext-unavail  { font-size: 11px; font-style: italic; fill: var(--fg-faint); }
+    .ext-axis     { stroke: var(--border); stroke-width: 1; }
+    .ext-peak-line  { stroke: #6b7280; stroke-width: 1; stroke-dasharray: 4 3; }
+    .ext-peak-label { font-size: 11px; font-weight: 600; fill: #475569; }
+    .ext-divider    { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 2; }
+    .ext-bar-above  { fill: #dc2626; }
+    .ext-bar-below  { fill: #f59e0b; }
+    .ext-bar-ref    { fill: #94a3b8; }
 
     /* Assumptions block */
     details.assumptions {
@@ -151,6 +175,8 @@
   <section id="cluster-banner" class="banner cluster" hidden>
     <strong>Semiconductor cluster break:</strong> <span id="cluster-detail"></span>
   </section>
+
+  <section id="ext-chart" class="ext-chart" hidden></section>
 
   <main id="signals">
     <div class="placeholder">Loading signals&hellip;</div>
@@ -216,20 +242,15 @@
     }
 
     function distanceDescription(state, distance) {
-      // distance is signed: positive = price above the trigger level (cushion).
-      const pct = (Math.abs(distance) * 100).toFixed(2) + "%";
+      // Short qualifier - adds information about direction without restating
+      // the numeric distance shown in the parent cell.
       if (state === "holding" || state === "tranche1") {
-        return distance >= 0
-          ? pct + " cushion above EMA 8 break"
-          : pct + " below EMA 8";
+        return distance >= 0 ? "cushion to EMA 8 break" : "EMA 8 breached";
       }
       if (state === "tranche2") {
-        return distance >= 0
-          ? pct + " cushion above EMA 21 break"
-          : pct + " below EMA 21";
+        return distance >= 0 ? "cushion to EMA 21 break" : "EMA 21 breached";
       }
-      // tranche3
-      return pct + " below EMA 21 reclaim level";
+      return "to EMA 21 reclaim";
     }
 
     function renderClusterBanner(payload) {
@@ -241,10 +262,15 @@
         return;
       }
       sect.hidden = false;
+      // Prefer brokenMembers if present (introduced after the initial release);
+      // fall back to brokenCount-only phrasing if an older build is in play.
+      const broken = (semi.brokenMembers && semi.brokenMembers.length)
+        ? semi.brokenMembers
+        : null;
       detail.textContent =
         semi.brokenCount + " of " + semi.members.length +
-        " semiconductor-cluster names in Tranche 2 or beyond (" +
-        semi.members.join(", ") + ").";
+        " semiconductor-cluster names in Tranche 2 or beyond" +
+        (broken ? " (" + broken.join(", ") + ")" : "") + ".";
     }
 
     function renderFreshness(payload) {
@@ -344,26 +370,27 @@
           continue;
         }
         const dp = chooseDecimals(r.lastClose);
-        const stateClass = "state-" + r.state;
+        // Parabola-broken names get a distinct pill so they do not read as a
+        // routine Tranche 2; the state code itself is unchanged.
+        const isBroken = r.parabolaBroken && r.state === "tranche2";
+        const stateClass = isBroken ? "state-tranche2-broken" : "state-" + r.state;
+        const stateSub = isBroken
+          ? "Parabola broken &mdash; beyond routine Tranche 2"
+          : r.stateLabel;
         const trigLevel = triggerLabel(r.activeTrigger.level);
         const trigValue = fmtNum(r.activeTrigger.value, dp);
         const distDesc = distanceDescription(r.state, r.distanceToTrigger);
 
-        let clusterCell;
-        if (r.cluster === "semiconductor") {
-          if (r.clusterBreak) {
-            clusterCell = '<span class="pill cluster-flag" title="2+ cluster members in Tranche 2 or beyond">Semi &middot; break</span>';
-          } else {
-            clusterCell = '<span class="pill cluster-quiet">Semi</span>';
-          }
-        } else {
-          clusterCell = '<span style="color:var(--fg-faint)">—</span>';
-        }
+        // Cluster column: static membership tag only. Break status lives in
+        // the banner; repeating it on every chip duplicates information.
+        const clusterCell = (r.cluster === "semiconductor")
+          ? '<span class="pill cluster-quiet">Semi</span>'
+          : '<span style="color:var(--fg-faint)">&mdash;</span>';
 
         html.push('<tr>',
           '<td class="ticker">' + r.ticker + '</td>',
           '<td><span class="pill ' + stateClass + '">' + STATE_LABEL[r.state] + '</span>' +
-            '<span class="submeta">' + r.stateLabel + '</span></td>',
+            '<span class="submeta">' + stateSub + '</span></td>',
           '<td class="num">' + fmtNum(r.lastClose, dp) +
             '<span class="submeta">' + r.lastBarDate + '</span></td>',
           '<td class="num">' + fmtNum(r.ema8, dp) +
@@ -398,10 +425,102 @@
       }
     }
 
+    function renderChart(payload) {
+      const root = document.getElementById("ext-chart");
+      const rows = (payload.tickers || []).map(function (r) {
+        return {
+          ticker: r.ticker,
+          ext: (typeof r.extPctEma200 === "number") ? r.extPctEma200 : null,
+          isRef: false,
+        };
+      });
+      // Sort: numeric extension descending, nulls last (ticker alpha for stability).
+      rows.sort(function (a, b) {
+        if (a.ext === null && b.ext === null) return a.ticker.localeCompare(b.ticker);
+        if (a.ext === null) return 1;
+        if (b.ext === null) return -1;
+        return b.ext - a.ext;
+      });
+      // Append SLV reference row at the bottom, visually separated.
+      const slv = payload.reference && payload.reference.SLV;
+      if (slv && typeof slv.extPctEma200 === "number") {
+        rows.push({ ticker: "SLV", ext: slv.extPctEma200, isRef: true });
+      }
+      if (rows.length === 0) { root.hidden = true; return; }
+
+      const peakPct = (typeof payload.silverJanPeakPct === "number")
+        ? payload.silverJanPeakPct : 80;
+
+      // X-axis: 0 to max-data padded, rounded up to next multiple of 20.
+      const numericExts = rows
+        .filter(function (r) { return r.ext !== null; })
+        .map(function (r) { return r.ext; });
+      const dataMax = Math.max.apply(null, numericExts.concat([peakPct]));
+      const xMax = Math.max(20, Math.ceil((dataMax * 1.08) / 20) * 20);
+
+      // Layout
+      const W = 800;
+      const margin = { left: 72, right: 72, top: 60, bottom: 24 };
+      const rowH = 30;
+      const plotW = W - margin.left - margin.right;
+      const refIdx = rows.findIndex(function (r) { return r.isRef; });
+      const plotH = rows.length * rowH + (refIdx >= 0 ? 8 : 0);
+      const H = margin.top + plotH + margin.bottom;
+      const xScale = function (v) { return margin.left + (v / xMax) * plotW; };
+
+      const out = [];
+      out.push('<svg viewBox="0 0 ' + W + ' ' + H + '" class="ext-svg" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Extension above 200-day moving average versus silver January peak">');
+
+      out.push('<text x="' + margin.left + '" y="22" class="ext-title">How stretched is each name versus silver in January</text>');
+      out.push('<text x="' + margin.left + '" y="40" class="ext-subtitle">Price distance above the 200-day moving average</text>');
+
+      // Plot baseline (x=0)
+      out.push('<line x1="' + margin.left + '" y1="' + margin.top + '" x2="' + margin.left + '" y2="' + (margin.top + plotH) + '" class="ext-axis"/>');
+
+      // Peak reference line at +80%
+      const peakX = xScale(peakPct);
+      out.push('<line x1="' + peakX.toFixed(1) + '" y1="' + (margin.top - 6) + '" x2="' + peakX.toFixed(1) + '" y2="' + (margin.top + plotH) + '" class="ext-peak-line"/>');
+      out.push('<text x="' + peakX.toFixed(1) + '" y="' + (margin.top - 10) + '" class="ext-peak-label" text-anchor="middle">Silver Jan peak &asymp; +' + peakPct + '%</text>');
+
+      let yCursor = margin.top;
+      rows.forEach(function (r, i) {
+        // Divider above the reference row.
+        if (r.isRef) {
+          out.push('<line x1="' + margin.left + '" y1="' + (yCursor + 2).toFixed(1) + '" x2="' + (W - margin.right) + '" y2="' + (yCursor + 2).toFixed(1) + '" class="ext-divider"/>');
+          yCursor += 8;
+        }
+        const cy = yCursor + rowH / 2;
+        const labelY = cy + 4;
+        out.push('<text x="' + (margin.left - 8) + '" y="' + labelY.toFixed(1) + '" class="ext-label" text-anchor="end">' + r.ticker + '</text>');
+
+        if (r.ext === null) {
+          out.push('<text x="' + (margin.left + 6) + '" y="' + labelY.toFixed(1) + '" class="ext-unavail">EMA 200 unavailable</text>');
+        } else {
+          const xEnd = xScale(r.ext);
+          const barW = Math.max(1, xEnd - margin.left);
+          const barH = 16;
+          const barY = cy - barH / 2;
+          let cls = "ext-bar-below";
+          if (r.isRef) cls = "ext-bar-ref";
+          else if (r.ext >= peakPct) cls = "ext-bar-above";
+          out.push('<rect x="' + margin.left + '" y="' + barY.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + barH + '" class="' + cls + '"/>');
+          const valStr = (r.ext >= 0 ? "+" : "−") + Math.abs(r.ext).toFixed(1) + "%";
+          out.push('<text x="' + (xEnd + 6).toFixed(1) + '" y="' + labelY.toFixed(1) + '" class="ext-value">' + valStr + (r.isRef ? " (reference)" : "") + '</text>');
+        }
+
+        yCursor += rowH;
+      });
+
+      out.push('</svg>');
+      root.innerHTML = out.join("");
+      root.hidden = false;
+    }
+
     function render(payload) {
       renderGenerated(payload);
       renderFreshness(payload);
       renderClusterBanner(payload);
+      renderChart(payload);
       renderAssumptions(payload);
       renderTable(payload);
     }
