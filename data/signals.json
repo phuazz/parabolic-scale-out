@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-22T23:03:31+00:00",
+  "generatedAt": "2026-06-23T22:47:39+00:00",
   "source": "https://phuazz.github.io/Portfolio-Command-Centre/data/history.json",
   "assumptions": {
     "tranche1": {
@@ -11,9 +11,9 @@
     "priceBasis": "Close (c), not adjusted close (ac)."
   },
   "freshness": {
-    "asOfBuild": "2026-06-22T23:03:31+00:00",
+    "asOfBuild": "2026-06-23T22:47:39+00:00",
     "staleThresholdDays": 5,
-    "maxBarAgeDays": 0.96,
+    "maxBarAgeDays": 0.95,
     "staleTickers": [],
     "weekendStampedTickers": []
   },
@@ -27,10 +27,12 @@
         "SOI.PA"
       ],
       "brokenMembers": [
+        "MRVL",
+        "MU",
         "SOI.PA"
       ],
-      "brokenCount": 1,
-      "clusterBreak": false,
+      "brokenCount": 3,
+      "clusterBreak": true,
       "rule": "Two or more cluster members in Tranche 2 or beyond."
     }
   },
@@ -38,113 +40,117 @@
   "reference": {
     "SLV": {
       "ticker": "SLV",
-      "lastBarDate": "2026-06-22",
-      "lastClose": 58.91,
-      "ema200": 61.3326,
-      "extPctEma200": -3.95
+      "lastBarDate": "2026-06-23",
+      "lastClose": 55.73,
+      "ema200": 61.2768,
+      "extPctEma200": -9.05
     }
   },
   "tickers": [
     {
       "ticker": "MU",
-      "lastBarDate": "2026-06-22",
-      "lastBarUnix": 1782135000,
-      "lastBarWeekday": "Monday",
-      "barAgeDays": 0.4,
+      "lastBarDate": "2026-06-23",
+      "lastBarUnix": 1782221400,
+      "lastBarWeekday": "Tuesday",
+      "barAgeDays": 0.39,
       "isWeekendStamped": false,
       "isStale": false,
-      "lastClose": 1211.38,
-      "ema8": 1072.6319,
-      "ema21": 969.8089,
-      "ema50": 802.0413,
-      "ema200": 476.304,
-      "extPctEma200": 154.33,
-      "drawdownFromRecentHigh": 0.0,
+      "lastClose": 1051.77,
+      "ema8": 1067.9959,
+      "ema21": 977.2599,
+      "ema50": 811.8346,
+      "ema200": 482.03,
+      "extPctEma200": 118.2,
+      "drawdownFromRecentHigh": 13.18,
       "parabolaBroken": false,
       "macd": {
-        "line": 102.14158,
-        "signal": 93.907801,
-        "hist": 8.23378
+        "line": 95.72627,
+        "signal": 94.271495,
+        "hist": 1.454776
       },
       "recentHigh": 1211.38,
       "recentHighLookback": 20,
-      "state": "tranche1",
-      "stateLabel": "Above EMA 8 - Tranche 1 trigger met (extended near highs)",
+      "state": "tranche2",
+      "stateLabel": "Below EMA 8 - Tranche 2 trigger met",
       "activeTrigger": {
-        "level": "ema8",
-        "value": 1072.6319
+        "level": "ema21",
+        "value": 977.2599
       },
-      "distanceToTrigger": 0.129353,
+      "distanceToTrigger": 0.076244,
       "cluster": "semiconductor",
       "barCount": 2512,
       "notes": [
         "Price series may be split-adjusted - verify absolute levels independently."
       ],
-      "clusterBreak": false,
-      "clusterBrokenCount": 1,
+      "clusterBreak": true,
+      "clusterBrokenCount": 3,
       "clusterBrokenMembers": [
-        "SOI.PA"
+        "MU",
+        "SOI.PA",
+        "MRVL"
       ]
     },
     {
       "ticker": "INTC",
-      "lastBarDate": "2026-06-22",
-      "lastBarUnix": 1782135000,
-      "lastBarWeekday": "Monday",
-      "barAgeDays": 0.4,
+      "lastBarDate": "2026-06-23",
+      "lastBarUnix": 1782221400,
+      "lastBarWeekday": "Tuesday",
+      "barAgeDays": 0.39,
       "isWeekendStamped": false,
       "isStale": false,
-      "lastClose": 140.94,
-      "ema8": 125.8218,
-      "ema21": 117.8882,
-      "ema50": 103.0208,
-      "ema200": 64.792,
-      "extPctEma200": 117.53,
-      "drawdownFromRecentHigh": 0.0,
+      "lastClose": 132.28,
+      "ema8": 127.257,
+      "ema21": 119.1966,
+      "ema50": 104.1682,
+      "ema200": 65.4635,
+      "extPctEma200": 102.07,
+      "drawdownFromRecentHigh": 6.14,
       "parabolaBroken": false,
       "macd": {
-        "line": 7.205229,
-        "signal": 5.625506,
-        "hist": 1.579723
+        "line": 7.445246,
+        "signal": 5.989454,
+        "hist": 1.455792
       },
       "recentHigh": 140.94,
       "recentHighLookback": 20,
-      "state": "tranche1",
-      "stateLabel": "Above EMA 8 - Tranche 1 trigger met (extended near highs)",
+      "state": "holding",
+      "stateLabel": "Above EMA 8 - holding",
       "activeTrigger": {
         "level": "ema8",
-        "value": 125.8218
+        "value": 127.257
       },
-      "distanceToTrigger": 0.120156,
+      "distanceToTrigger": 0.039472,
       "cluster": "semiconductor",
       "barCount": 2512,
       "notes": [],
-      "clusterBreak": false,
-      "clusterBrokenCount": 1,
+      "clusterBreak": true,
+      "clusterBrokenCount": 3,
       "clusterBrokenMembers": [
-        "SOI.PA"
+        "MU",
+        "SOI.PA",
+        "MRVL"
       ]
     },
     {
       "ticker": "SOI.PA",
-      "lastBarDate": "2026-06-22",
-      "lastBarUnix": 1782111600,
-      "lastBarWeekday": "Monday",
-      "barAgeDays": 0.67,
+      "lastBarDate": "2026-06-23",
+      "lastBarUnix": 1782198000,
+      "lastBarWeekday": "Tuesday",
+      "barAgeDays": 0.66,
       "isWeekendStamped": false,
       "isStale": false,
-      "lastClose": 129.45,
-      "ema8": 128.6344,
-      "ema21": 137.6821,
-      "ema50": 127.7525,
-      "ema200": 79.9295,
-      "extPctEma200": 61.96,
-      "drawdownFromRecentHigh": 32.65,
+      "lastClose": 120.4,
+      "ema8": 126.8045,
+      "ema21": 136.111,
+      "ema50": 127.4641,
+      "ema200": 80.3322,
+      "extPctEma200": 49.88,
+      "drawdownFromRecentHigh": 37.36,
       "parabolaBroken": true,
       "macd": {
-        "line": -5.084444,
-        "signal": -0.797629,
-        "hist": -4.286816
+        "line": -5.693916,
+        "signal": -1.776886,
+        "hist": -3.91703
       },
       "recentHigh": 192.2,
       "recentHighLookback": 20,
@@ -152,152 +158,158 @@
       "stateLabel": "Below EMA 21 - Tranche 3 trail active",
       "activeTrigger": {
         "level": "ema21",
-        "value": 137.6821
+        "value": 136.111
       },
-      "distanceToTrigger": -0.05979,
+      "distanceToTrigger": -0.115428,
       "cluster": "semiconductor",
       "barCount": 2560,
       "notes": [
-        "Parabola broken - 32.6% below the trailing 20-day high."
+        "Parabola broken - 37.4% below the trailing 20-day high."
       ],
-      "clusterBreak": false,
-      "clusterBrokenCount": 1,
+      "clusterBreak": true,
+      "clusterBrokenCount": 3,
       "clusterBrokenMembers": [
-        "SOI.PA"
+        "MU",
+        "SOI.PA",
+        "MRVL"
       ]
     },
     {
       "ticker": "4004.T",
-      "lastBarDate": "2026-06-22",
-      "lastBarUnix": 1782086400,
-      "lastBarWeekday": "Monday",
-      "barAgeDays": 0.96,
+      "lastBarDate": "2026-06-23",
+      "lastBarUnix": 1782172800,
+      "lastBarWeekday": "Tuesday",
+      "barAgeDays": 0.95,
       "isWeekendStamped": false,
       "isStale": false,
-      "lastClose": 19325.0,
-      "ema8": 18260.1262,
-      "ema21": 17670.2114,
-      "ema50": 16177.1534,
-      "ema200": 10883.2963,
-      "extPctEma200": 77.57,
-      "drawdownFromRecentHigh": 0.0,
+      "lastClose": 18350.0,
+      "ema8": 18280.0981,
+      "ema21": 17732.0104,
+      "ema50": 16262.363,
+      "ema200": 10957.5918,
+      "extPctEma200": 67.46,
+      "drawdownFromRecentHigh": 5.05,
       "parabolaBroken": false,
       "macd": {
-        "line": 596.16492,
-        "signal": 535.503029,
-        "hist": 60.661891
+        "line": 577.05951,
+        "signal": 543.814325,
+        "hist": 33.245185
       },
       "recentHigh": 19325.0,
-      "recentHighLookback": 20,
-      "state": "tranche1",
-      "stateLabel": "Above EMA 8 - Tranche 1 trigger met (extended near highs)",
-      "activeTrigger": {
-        "level": "ema8",
-        "value": 18260.1262
-      },
-      "distanceToTrigger": 0.058317,
-      "cluster": "semiconductor",
-      "barCount": 2463,
-      "notes": [],
-      "clusterBreak": false,
-      "clusterBrokenCount": 1,
-      "clusterBrokenMembers": [
-        "SOI.PA"
-      ]
-    },
-    {
-      "ticker": "NOK",
-      "lastBarDate": "2026-06-22",
-      "lastBarUnix": 1782135000,
-      "lastBarWeekday": "Monday",
-      "barAgeDays": 0.4,
-      "isWeekendStamped": false,
-      "isStale": false,
-      "lastClose": 14.43,
-      "ema8": 14.2245,
-      "ema21": 14.3496,
-      "ema50": 13.1957,
-      "ema200": 9.2521,
-      "extPctEma200": 55.96,
-      "drawdownFromRecentHigh": 14.36,
-      "parabolaBroken": false,
-      "macd": {
-        "line": 0.138521,
-        "signal": 0.404279,
-        "hist": -0.265758
-      },
-      "recentHigh": 16.85,
       "recentHighLookback": 20,
       "state": "holding",
       "stateLabel": "Above EMA 8 - holding",
       "activeTrigger": {
         "level": "ema8",
-        "value": 14.2245
+        "value": 18280.0981
       },
-      "distanceToTrigger": 0.014447,
+      "distanceToTrigger": 0.003824,
+      "cluster": "semiconductor",
+      "barCount": 2463,
+      "notes": [],
+      "clusterBreak": true,
+      "clusterBrokenCount": 3,
+      "clusterBrokenMembers": [
+        "MU",
+        "SOI.PA",
+        "MRVL"
+      ]
+    },
+    {
+      "ticker": "NOK",
+      "lastBarDate": "2026-06-23",
+      "lastBarUnix": 1782221400,
+      "lastBarWeekday": "Tuesday",
+      "barAgeDays": 0.39,
+      "isWeekendStamped": false,
+      "isStale": false,
+      "lastClose": 13.7,
+      "ema8": 14.1079,
+      "ema21": 14.2906,
+      "ema50": 13.2154,
+      "ema200": 9.2963,
+      "extPctEma200": 47.37,
+      "drawdownFromRecentHigh": 18.69,
+      "parabolaBroken": false,
+      "macd": {
+        "line": 0.076057,
+        "signal": 0.338635,
+        "hist": -0.262577
+      },
+      "recentHigh": 16.85,
+      "recentHighLookback": 20,
+      "state": "tranche3",
+      "stateLabel": "Below EMA 21 - Tranche 3 trail active",
+      "activeTrigger": {
+        "level": "ema21",
+        "value": 14.2906
+      },
+      "distanceToTrigger": -0.041327,
       "cluster": null,
       "barCount": 2512,
       "notes": []
     },
     {
       "ticker": "MRVL",
-      "lastBarDate": "2026-06-22",
-      "lastBarUnix": 1782135000,
-      "lastBarWeekday": "Monday",
-      "barAgeDays": 0.4,
+      "lastBarDate": "2026-06-23",
+      "lastBarUnix": 1782221400,
+      "lastBarWeekday": "Tuesday",
+      "barAgeDays": 0.39,
       "isWeekendStamped": false,
       "isStale": false,
-      "lastClose": 307.86,
-      "ema8": 291.9636,
-      "ema21": 262.2773,
-      "ema50": 213.4344,
-      "ema200": 133.4979,
-      "extPctEma200": 130.61,
-      "drawdownFromRecentHigh": 2.71,
+      "lastClose": 279.04,
+      "ema8": 289.0917,
+      "ema21": 263.8012,
+      "ema50": 216.0072,
+      "ema200": 134.946,
+      "extPctEma200": 106.78,
+      "drawdownFromRecentHigh": 11.82,
       "parabolaBroken": false,
       "macd": {
-        "line": 30.95759,
-        "signal": 30.393919,
-        "hist": 0.563672
+        "line": 28.360084,
+        "signal": 29.987152,
+        "hist": -1.627068
       },
       "recentHigh": 316.43,
       "recentHighLookback": 20,
-      "state": "tranche1",
-      "stateLabel": "Above EMA 8 - Tranche 1 trigger met (extended near highs)",
+      "state": "tranche2",
+      "stateLabel": "Below EMA 8 - Tranche 2 trigger met",
       "activeTrigger": {
-        "level": "ema8",
-        "value": 291.9636
+        "level": "ema21",
+        "value": 263.8012
       },
-      "distanceToTrigger": 0.054447,
+      "distanceToTrigger": 0.057766,
       "cluster": "semiconductor",
       "barCount": 2512,
       "notes": [],
-      "clusterBreak": false,
-      "clusterBrokenCount": 1,
+      "clusterBreak": true,
+      "clusterBrokenCount": 3,
       "clusterBrokenMembers": [
-        "SOI.PA"
+        "MU",
+        "SOI.PA",
+        "MRVL"
       ]
     },
     {
       "ticker": "LIFE",
-      "lastBarDate": "2026-06-22",
-      "lastBarUnix": 1782135000,
-      "lastBarWeekday": "Monday",
-      "barAgeDays": 0.4,
+      "lastBarDate": "2026-06-23",
+      "lastBarUnix": 1782221400,
+      "lastBarWeekday": "Tuesday",
+      "barAgeDays": 0.39,
       "isWeekendStamped": false,
       "isStale": false,
-      "lastClose": 15.53,
-      "ema8": 16.2159,
-      "ema21": 17.3795,
-      "ema50": 17.4927,
+      "lastClose": 15.26,
+      "ema8": 16.0035,
+      "ema21": 17.1868,
+      "ema50": 17.4052,
       "ema200": null,
       "extPctEma200": null,
-      "drawdownFromRecentHigh": 26.54,
+      "drawdownFromRecentHigh": 27.81,
       "parabolaBroken": true,
       "macd": {
-        "line": -0.990736,
-        "signal": -0.789678,
-        "hist": -0.201058
+        "line": -1.025478,
+        "signal": -0.836838,
+        "hist": -0.18864
       },
       "recentHigh": 21.14,
       "recentHighLookback": 20,
@@ -305,14 +317,14 @@
       "stateLabel": "Below EMA 21 - Tranche 3 trail active",
       "activeTrigger": {
         "level": "ema21",
-        "value": 17.3795
+        "value": 17.1868
       },
-      "distanceToTrigger": -0.106418,
+      "distanceToTrigger": -0.11211,
       "cluster": null,
-      "barCount": 99,
+      "barCount": 100,
       "notes": [
-        "Limited history (99 bars) - EMA 200 unavailable.",
-        "Parabola broken - 26.5% below the trailing 20-day high."
+        "Limited history (100 bars) - EMA 200 unavailable.",
+        "Parabola broken - 27.8% below the trailing 20-day high."
       ]
     }
   ]
